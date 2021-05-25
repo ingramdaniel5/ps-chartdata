@@ -8,9 +8,17 @@ import (
 	"net/http"
 	"ps-chartdata/model"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo"
+)
+
+const (
+	FROM_TIME      = "FROM_TIME"
+	TO_TIME        = "TO_TIME"
+	BASE_CURRENCY  = "BASE_CURRENCY"
+	QUOTE_CURRENCY = "QUOTE_CURRENCY"
 )
 
 // GET/config handler
@@ -22,12 +30,13 @@ func GetHistoryHandler(c echo.Context) error {
 	resolution := c.QueryParam("resolution")
 	countback := c.QueryParam("countback")
 
-	// f := time.Unix(1494505756, 0)
+	fromTimeUInt, err := strconv.ParseUint(string(from), 10, 64)
+	fromTimeString := time.Unix(int64(fromTimeUInt), int64(0)).UTC().Format(time.RFC3339)
 
-	// todo:
-	// map from & to from unix time to year/month/date
+	toTimeUInt, err := strconv.ParseUint(string(to), 10, 64)
+	toTimeString := time.Unix(int64(toTimeUInt), int64(0)).UTC().Format(time.RFC3339)
 
-	// todo: inject params into below query
+	fmt.Println(fromTimeString, toTimeString)
 
 	fmt.Println(tickerName, from, to, resolution, countback)
 
@@ -36,13 +45,13 @@ func GetHistoryHandler(c echo.Context) error {
 	query := `{
 		ethereum(network: bsc) {
 			dexTrades(options: {asc: ["date.date"]}, 
-				date: {since: "2021-05-22"}, 
-				baseCurrency: {is: "0x8076c74c5e3f5852037f31ff0093eeb8c8add8d3"},
+				date: {since: "FROM_TIME" till:"TO_TIME"}, 
+				baseCurrency: {is: "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82"},
 				quoteCurrency: {is: "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c"}
 			)
 			{
 				timeInterval {
-					minute(count: 5)
+					minute(count: 2000)
 				}
 				trades:count
 				high: quotePrice(calculate: maximum)
@@ -61,6 +70,19 @@ func GetHistoryHandler(c echo.Context) error {
 			}
 		}
 	}`
+
+	query = strings.ReplaceAll(
+		query,
+		FROM_TIME,
+		fromTimeString,
+	)
+	query = strings.ReplaceAll(
+		query,
+		TO_TIME,
+		toTimeString,
+	)
+
+	fmt.Println(query)
 
 	reqBody, err := json.Marshal(map[string]string{
 		"query": query,
@@ -90,7 +112,7 @@ func GetHistoryHandler(c echo.Context) error {
 	// todo: map data to history struct
 	history := model.History{}
 
-	fmt.Println(data)
+	// fmt.Println(data)
 
 	// map the data...
 	for _, trade := range data["data"]["ethereum"]["dexTrades"] {
