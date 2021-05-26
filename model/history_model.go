@@ -22,7 +22,7 @@ type DexTrade struct {
 	QuoteCurrency Currency     `json:"quoteCurrency"`
 	Date          Date         `json:"date"`
 	Trades        int          `json:"trades"`
-	TradeAmount   float64      `json:"trade_amount"`
+	TradeAmount   float64      `json:"tradeAmount"`
 }
 
 type Date struct {
