@@ -45,15 +45,17 @@ func GetHistoryHandler(c echo.Context) error {
 	query := `{
 		ethereum(network: bsc) {
 			dexTrades(options: {asc: ["date.date"]}, 
-				date: {since: "FROM_TIME" till:"TO_TIME"}, 
-				baseCurrency: {is: "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82"},
+				date: {since: "FROM_TIME" till:"TO_TIME"},
+				exchangeName: {is: "Pancake"} 
+				baseCurrency: {is: "0x8076c74c5e3f5852037f31ff0093eeb8c8add8d3"},
 				quoteCurrency: {is: "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c"}
 			)
 			{
 				timeInterval {
-					minute(count: 2000)
+					minute(count: 1440)
 				}
-				trades:count
+				tradeAmount(in:USD)
+        trades:count
 				high: quotePrice(calculate: maximum)
 				low: quotePrice(calculate: minimum)
 				open: minimum(of: block, get: quote_price)
@@ -81,8 +83,6 @@ func GetHistoryHandler(c echo.Context) error {
 		TO_TIME,
 		toTimeString,
 	)
-
-	fmt.Println(query)
 
 	reqBody, err := json.Marshal(map[string]string{
 		"query": query,
@@ -123,7 +123,12 @@ func GetHistoryHandler(c echo.Context) error {
 			c.Logger().Error(err.Error())
 			break
 		}
-		history.BarTime = append(history.BarTime, time.Duration(t.Unix()))
+
+		fmt.Println(trade.TimeInterval.Minute)
+		fmt.Println(t)
+		fmt.Println(t.Unix())
+
+		history.BarTime = append(history.BarTime, t.Unix())
 
 		openPrice, err := strconv.ParseFloat(trade.Open, 64)
 		if err != nil {
@@ -140,8 +145,7 @@ func GetHistoryHandler(c echo.Context) error {
 		history.HighPrice = append(history.HighPrice, trade.High)
 		history.LowPrice = append(history.LowPrice, trade.Low)
 
-		// todo
-		history.Volume = append(history.Volume, trade.Trades)
+		history.Volume = append(history.Volume, trade.TradeAmount)
 	}
 
 	history.StatusCode = model.STATUS_OK
