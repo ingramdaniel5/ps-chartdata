@@ -47,7 +47,7 @@ func GetHistoryHandler(c echo.Context) error {
 			dexTrades(options: {asc: ["date.date"]}, 
 				date: {since: "FROM_TIME" till:"TO_TIME"},
 				exchangeName: {is: "Pancake"} 
-				baseCurrency: {is: "0x8076c74c5e3f5852037f31ff0093eeb8c8add8d3"},
+				baseCurrency: {is: "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82"},
 				quoteCurrency: {is: "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c"}
 			)
 			{
