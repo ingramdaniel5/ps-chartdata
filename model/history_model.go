@@ -25,6 +25,11 @@ type DexTrade struct {
 	TradeAmount   float64      `json:"tradeAmount"`
 }
 
+type NoHistory struct {
+	StatusCode string `json:"s"`
+	NextTime   string `json:"nextTime"`
+}
+
 type Date struct {
 	Date string `json:"date"`
 }

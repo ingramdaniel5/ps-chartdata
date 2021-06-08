@@ -13,9 +13,9 @@ func SearchSymbolsHandler(c echo.Context) error {
 
 	// todo: revise?
 	search := model.Symbol{
-		Name:                 "t",
-		ExchangeTraded:       "t",
-		ExchangeListed:       "t",
+		Name:                 "AAPL",
+		ExchangeTraded:       "AAPL",
+		ExchangeListed:       "AAPL",
 		Timezone:             "America/New_York",
 		Minmov:               1,
 		Minmov2:              0,
@@ -25,7 +25,7 @@ func SearchSymbolsHandler(c echo.Context) error {
 		HasNoVolume:          false,
 		Description:          "test",
 		Type:                 "stock",
-		SupportedResolutions: []string{"D", "2D", "3D", "W", "3W", "M", "6M"},
+		SupportedResolutions: []string{"1D", "2D", "3D", "W", "3W", "M", "6M"},
 	}
 
 	return c.JSON(http.StatusOK, search)

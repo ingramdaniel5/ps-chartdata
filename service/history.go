@@ -55,7 +55,7 @@ func GetHistoryHandler(c echo.Context) error {
 					minute(count: 1440)
 				}
 				tradeAmount(in:USD)
-        trades:count
+        		trades:count
 				high: quotePrice(calculate: maximum)
 				low: quotePrice(calculate: minimum)
 				open: minimum(of: block, get: quote_price)
@@ -94,11 +94,13 @@ func GetHistoryHandler(c echo.Context) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-KEY", "BQYug1u2azt1EzuPggXfnhdhzFObRW0g")
-
+	fmt.Println("req.Body")
+	fmt.Println(req.Body)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		c.Logger().Error(err.Error())
 	}
+
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -113,7 +115,13 @@ func GetHistoryHandler(c echo.Context) error {
 	history := model.History{}
 
 	// fmt.Println(data)
-
+	if len(data["data"]["ethereum"]["dexTrades"]) == 0 {
+		n := model.NoHistory{
+			StatusCode: "no_data",
+			NextTime:   "",
+		}
+		return c.JSON(http.StatusOK, n)
+	}
 	// map the data...
 	for _, trade := range data["data"]["ethereum"]["dexTrades"] {
 
@@ -123,10 +131,11 @@ func GetHistoryHandler(c echo.Context) error {
 			c.Logger().Error(err.Error())
 			break
 		}
-
-		fmt.Println(trade.TimeInterval.Minute)
+		//1584403200 //1623110400
+		//next time 1522108800
+		/*fmt.Println(trade.TimeInterval.Minute)
 		fmt.Println(t)
-		fmt.Println(t.Unix())
+		fmt.Println(t.Unix())*/
 
 		history.BarTime = append(history.BarTime, t.Unix())
 
