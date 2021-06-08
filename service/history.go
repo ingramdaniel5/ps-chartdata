@@ -15,10 +15,11 @@ import (
 )
 
 const (
-	FROM_TIME      = "FROM_TIME"
-	TO_TIME        = "TO_TIME"
-	BASE_CURRENCY  = "BASE_CURRENCY"
-	QUOTE_CURRENCY = "QUOTE_CURRENCY"
+	FROM_TIME          = "FROM_TIME"
+	TO_TIME            = "TO_TIME"
+	BASE_CURRENCY      = "BASE_CURRENCY"
+	QUOTE_CURRENCY     = "QUOTE_CURRENCY"
+	FORMATTED_INTERVAL = "FORMATTED_INTERVAL"
 )
 
 // GET/config handler
@@ -36,6 +37,21 @@ func GetHistoryHandler(c echo.Context) error {
 	toTimeUInt, err := strconv.ParseUint(string(to), 10, 64)
 	toTimeString := time.Unix(int64(toTimeUInt), int64(0)).UTC().Format(time.RFC3339)
 
+	timeInterval := "minute(count: 1440)"
+	if resolution == "5" {
+		timeInterval = "minute(count: 5)"
+	} else if resolution == "240" {
+		timeInterval = "minute(count: 240)"
+	} else if resolution == "D" {
+		timeInterval = "minute(count: 1440)"
+	} else if resolution == "5D" {
+		timeInterval = "minute(count: 7200)"
+	} else if resolution == "1w" {
+		timeInterval = "minute(count: 10080)"
+	} else if resolution == "1m" {
+		timeInterval = "minute(count: 43200)"
+	}
+
 	fmt.Println(fromTimeString, toTimeString)
 
 	fmt.Println(tickerName, from, to, resolution, countback)
@@ -44,15 +60,15 @@ func GetHistoryHandler(c echo.Context) error {
 
 	query := `{
 		ethereum(network: bsc) {
-			dexTrades(options: {asc: ["date.date"]}, 
-				date: {since: "FROM_TIME" till:"TO_TIME"},
+			dexTrades(options: {limit: 200}
+				date: {since: "FROM_TIME" till:"TO_TIME"}
 				exchangeName: {is: "Pancake"} 
-				baseCurrency: {is: "0x8076c74c5e3f5852037f31ff0093eeb8c8add8d3"},
+				baseCurrency: {is: "0x8076c74c5e3f5852037f31ff0093eeb8c8add8d3"}
 				quoteCurrency: {is: "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c"}
-			)
+				)
 			{
 				timeInterval {
-					minute(count: 1440)
+					FORMATTED_INTERVAL
 				}
 				tradeAmount(in:USD)
         		trades:count
@@ -82,6 +98,11 @@ func GetHistoryHandler(c echo.Context) error {
 		query,
 		TO_TIME,
 		toTimeString,
+	)
+	query = strings.ReplaceAll(
+		query,
+		FORMATTED_INTERVAL,
+		timeInterval,
 	)
 
 	reqBody, err := json.Marshal(map[string]string{
@@ -150,8 +171,11 @@ func GetHistoryHandler(c echo.Context) error {
 			c.Logger().Error(err.Error())
 		}
 		history.ClosingPrice = append(history.ClosingPrice, closePrice)
-
-		history.HighPrice = append(history.HighPrice, trade.High)
+		if trade.High < 0.00001 {
+			history.HighPrice = append(history.HighPrice, trade.High)
+		} else {
+			history.HighPrice = append(history.HighPrice, 0.000000000000004)
+		}
 		history.LowPrice = append(history.LowPrice, trade.Low)
 
 		history.Volume = append(history.Volume, trade.TradeAmount)
